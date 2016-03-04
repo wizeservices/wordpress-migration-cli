@@ -77,7 +77,7 @@ def get_site_url_src(args, ssh):
         status = stdout.channel.recv_exit_status()
         if status != 0:
             exit_error(stderr.read().decode('utf-8'), ssh)
-            result = re.sub('http(s)?://', '', content)
+        result = re.sub('http(s)?://', '', content)
         log.info('Siteurl gathered = "%s"', result)
         return result
     except Exception as exc:
@@ -409,8 +409,8 @@ def main():
     Handles argument parser
     """
     shr = logging.StreamHandler()
-    fmt = '%(asctime)s - %(levelname)s - %(filename)s - %(message)s'
-    shr.setFormatter(logging.Formatter(fmt))
+    fmt = '%(asctime)s.%(msecs)03d - %(levelname)s - %(filename)s - %(message)s'
+    shr.setFormatter(logging.Formatter(fmt, "%H:%M:%S"))
     log.addHandler(shr)
     args = handle_options()
     levels = {'debug': logging.DEBUG, 'info': logging.INFO,
