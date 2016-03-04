@@ -1,17 +1,5 @@
 #!/usr/bin/python3
 
-"""
-Dependencies:
-    - Source:
-        - Openssh server.
-        - Tar.
-        - Wp-cli.
-    - Dest:
-        - Wp-cli.
-        - Mysqldump.
-        - Sed.
-"""
-
 import argparse
 import json
 import logging
@@ -197,8 +185,8 @@ def save_old_wordpress(args, ssh):
             exit_error(stderr.read().decode('utf-8'), ssh)
         log.info('Destination wordpress backup is done')
         log.info('Creating mysql destination dump')
-        cmd = ('mysqldump --add-drop-table -u {} -p{} {} > /tmp/mysql.dump'
-               .format(args.dest_dbuser, args.dest_dbpassw, args.dest_dbname))
+        cmd = ('wp --allow-root --path={} db export --add-drop-table '
+               '/tmp/mysql.dump'.format(args.dest_wpath))
         log.debug(cmd)
         _, stdout, stderr = ssh.exec_command(cmd)
         status = stdout.channel.recv_exit_status()
@@ -353,17 +341,6 @@ def handle_options():
     parser.add_argument('--src-wpath', action='store',
                         help='Set wordpress path for the source machine')
 
-    # Database creadentials for the src
-    parser.add_argument('--src-dbname', action='store',
-                        help='The wordpress database name of the source '
-                             'machine')
-    parser.add_argument('--src-dbuser', action='store', default='root',
-                        help='The wordpress username for the database of the '
-                             'source machine')
-    parser.add_argument('--src-dbpassw', action='store',
-                        help='The wordpress password for the database of the '
-                             'source machine')
-
     # Dest address and credentials
     parser.add_argument('--dest-address', action='store',
                         help='The address of the destination machine')
@@ -382,17 +359,6 @@ def handle_options():
     # Wordpress info for dest
     parser.add_argument('--dest-wpath', action='store',
                         help='Set wordpress path for the destination machine')
-
-    # Database creadentials for the dest
-    parser.add_argument('--dest-dbname', action='store',
-                        help='The wordpress database name of the destination'
-                             'machine')
-    parser.add_argument('--dest-dbuser', action='store', default='root',
-                        help='The wordpress username for the database of the '
-                             'destination machine')
-    parser.add_argument('--dest-dbpassw', action='store',
-                        help='The wordpress password for the database of the '
-                             'destination machine')
 
     args = parser.parse_args()
 
