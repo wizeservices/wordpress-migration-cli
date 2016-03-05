@@ -1,0 +1,15 @@
+{
+    "log_level": "info",
+    "src_address": "",
+    "src_port": 22,
+    "src_filekey": "",
+    "src_user": "",
+    "src_passw": "",
+    "src_wpath": "",
+    "dest_address": "",
+    "dest_port": 22,
+    "dest_filekey": "",
+    "dest_user": "",
+    "dest_passw": "",
+    "dest_wpath": ""
+}
