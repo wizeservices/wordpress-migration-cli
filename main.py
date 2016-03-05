@@ -230,16 +230,7 @@ def apply_backup(args, ssh, conf):
         if status != 0:
             exit_error(stderr.read().decode('utf-8'), ssh)
 
-        # Then it applies the mysql backup
-        cmd = ('mysql -u {} -p{} {} < /tmp/mysql.src.dump'
-               .format(args.dest_dbuser, args.dest_dbpassw, args.dest_dbname))
-        log.debug(cmd)
-        _, stdout, stderr = ssh.exec_command(cmd)
-        status = stdout.channel.recv_exit_status()
-        if status != 0:
-            exit_error(stderr.read().decode('utf-8'), ssh)
-
-        # Finally it replaces the conf values in wp-config.php
+        # Then it replaces the conf values in wp-config.php
         for key in conf:
             cmd = ("sed -i \"s/{0}'[^']*'[^']*/{0}', '{1}/g\""
                    " {2}/wp-config.php".format(key,
@@ -250,6 +241,16 @@ def apply_backup(args, ssh, conf):
             status = stdout.channel.recv_exit_status()
             if status != 0:
                 log.warning('Unable to execute %s (status = %d)', cmd, status)
+
+        # Finally it applies the mysql backup
+        cmd = ('wp --allow-root --path={} db import /tmp/mysql.src.dump'
+               .format(args.dest_wpath))
+        log.debug(cmd)
+        _, stdout, stderr = ssh.exec_command(cmd)
+        status = stdout.channel.recv_exit_status()
+        if status != 0:
+            exit_error(stderr.read().decode('utf-8'), ssh)
+
         log.info('Backup complete')
     except Exception as exc:
         exit_error(exc, ssh)
@@ -293,7 +294,7 @@ def start_migration(args):
     ssh.close()
 
 
-def load_from_json(args):
+def load_from_json(args, defaults):
     """Loads the arguments from a json file
     It overwrites the values read from argv
     """
@@ -303,7 +304,8 @@ def load_from_json(args):
         for item in dir(args):
             if item[0] == '_':
                 continue
-            if item in data:
+            if item in data and \
+                    args.__getattribute__(item) == defaults.get(item, None):
                 args.__setattr__(item, data[item])
     except Exception as exc:
         log.error(exc)
@@ -361,10 +363,13 @@ def handle_options():
                         help='Set wordpress path for the destination machine')
 
     args = parser.parse_args()
+    defaults = {item.dest: item.default
+                for item in parser._get_optional_actions()
+                if item.default is not None}
 
     # Load variables from json
     if args.json_file is not None:
-        load_from_json(args)
+        load_from_json(args, defaults)
 
     return args
 
