@@ -1,3 +1,4 @@
 *.json
 *.dump
 *.tar.gz
+__pycache__/*
