@@ -92,16 +92,18 @@ class DestGetDBCredentialsProcess(AbstractProcess):
         if status != 0:
             raise Exception(stderr.read().decode('utf-8'))
         content = stdout.read().decode('utf-8').replace('\n', ' ')
-        conf.update({'DB_NAME': None, 'DB_USER': None, 'DB_PASSWORD': None})
+        conf['wp-config'] = {'DB_NAME': None, 'DB_USER': None,
+                             'DB_PASSWORD': None}
         simple = (".*({0})'[^']*'([^']+)"
-                  .format('|'.join([key for key in conf])))
-        match = re.match(''.join(simple for key in conf), content)
+                  .format('|'.join([key for key in conf['wp-config']])))
+        match = re.match(''.join(simple for key in conf['wp-config']),
+                         content)
         if match:
             items = match.groups()
             for idx in range(0, len(items), 2):
-                conf[items[idx]] = items[idx + 1]
-        for key in conf:
-            if conf[key] is None:
+                conf['wp-config'][items[idx]] = items[idx + 1]
+        for key in conf['wp-config']:
+            if conf['wp-config'][key] is None:
                 raise Exception('Missing field "{}" in wp-config.php in '
                                 'source machine'.format(key))
 
@@ -138,6 +140,26 @@ class DestErasePreviousWordpress(AbstractProcess):
             raise Exception(stderr.read().decode('utf-8'))
 
 
+class DestGetSiteUrlProcess(AbstractProcess):
+    """Gets the site url using wp binary"""
+
+    def init(self):
+        self.target = AbstractProcess.DEST
+        self.name = 'Get site url from destination'
+
+    def execute(self, ssh, args, conf):
+        cmd = ('wp --allow-root --path={} option get siteurl'
+               .format(args.dest_wpath))
+        lib.log.debug(cmd)
+        _, stdout, stderr = ssh.exec_command(cmd)
+        status = stdout.channel.recv_exit_status()
+        if status != 0:
+            raise Exception(stderr.read().decode('utf-8'))
+        content = stdout.read().decode('utf-8').replace('\n', '')
+        conf['wp-config']['DOMAIN_CURRENT_SITE'] = \
+            re.sub('http(s)?://', '', content)
+
+
 class DestImportDBdump(AbstractProcess):
     """Imports the dump into destination"""
 
@@ -164,10 +186,10 @@ class DestReplaceConf(AbstractProcess):
         self.name = 'Replacing original database creadential in wp-config.php'
 
     def execute(self, ssh, args, conf):
-        for key in conf:
+        for key in conf['wp-config']:
             cmd = ("sed -i \"s/{0}'[^']*'[^']*/{0}', '{1}/g\""
                    " {2}/wp-config.php".format(key,
-                                               conf[key],
+                                               conf['wp-config'][key],
                                                args.dest_wpath))
             lib.log.debug(cmd)
             _, stdout, _ = ssh.exec_command(cmd)
@@ -175,25 +197,6 @@ class DestReplaceConf(AbstractProcess):
             if status != 0:
                 lib.log.warning('Unable to execute %s (status = %d)', cmd,
                                 status)
-
-
-class DestGetSiteUrlProcess(AbstractProcess):
-    """Gets the site url using wp binary"""
-
-    def init(self):
-        self.target = AbstractProcess.DEST
-        self.name = 'Get site url from destination'
-
-    def execute(self, ssh, args, conf):
-        cmd = ('wp --allow-root --path={} option get siteurl'
-               .format(args.dest_wpath))
-        lib.log.debug(cmd)
-        _, stdout, stderr = ssh.exec_command(cmd)
-        status = stdout.channel.recv_exit_status()
-        if status != 0:
-            raise Exception(stderr.read().decode('utf-8'))
-        content = stdout.read().decode('utf-8').replace('\n', '')
-        conf['DOMAIN_CURRENT_SITE'] = re.sub('http(s)?://', '', content)
 
 
 class DestUploadDatabaseDump(AbstractProcess):
@@ -229,10 +232,11 @@ class SrcDoDBBackup(AbstractProcess):
 
     def execute(self, ssh, args, conf):
         cmd = ('wp --allow-root --path={} search-replace --network --precise '
-               '--all-tables {} {} --export=/tmp/mysql.dump'
+               '{} {} {} --export=/tmp/mysql.dump'
                .format(args.src_wpath,
-                       conf['SRC_DOMAIN_CURRENT_SITE'],
-                       conf['DOMAIN_CURRENT_SITE']))
+                       conf['wp-config']['SRC_DOMAIN_CURRENT_SITE'],
+                       conf['wp-config']['DOMAIN_CURRENT_SITE'],
+                       ' '.join(conf['tables'])))
         lib.log.debug(cmd)
         _, stdout, stderr = ssh.exec_command(cmd)
         status = stdout.channel.recv_exit_status()
@@ -283,6 +287,33 @@ class SrcDownloadTar(AbstractProcess):
             raise Exception('Tar file does not exist')
 
 
+class SrcGetTableList(AbstractProcess):
+    """Gathers the list of tables
+    """
+
+    def init(self):
+        self.target = AbstractProcess.SRC
+        self.name = 'Get list of tables'
+
+    def execute(self, ssh, args, conf):
+        cmd = ('wp --allow-root --path={} db tables \'wp_*\' --format=csv'
+               .format(args.src_wpath))
+        lib.log.debug(cmd)
+        _, stdout, stderr = ssh.exec_command(cmd)
+        content = stdout.read().decode('utf-8').replace('\n', '')
+        status = stdout.channel.recv_exit_status()
+        if status != 0:
+            raise Exception(stderr.read().decode('utf-8'))
+        conf['tables'] = content.split(',')
+        tmp = list()
+        if args.no_users:
+            for item in conf['tables']:
+                if 'user' in item:
+                    continue
+                tmp.append(item)
+            conf['tables'] = tmp
+
+
 class SrcGetSiteUrlProcess(AbstractProcess):
     """Gathers the siteurl for the source machine
     The siteurl helps when it executes the search and replace in the database
@@ -301,4 +332,5 @@ class SrcGetSiteUrlProcess(AbstractProcess):
         status = stdout.channel.recv_exit_status()
         if status != 0:
             raise Exception(stderr.read().decode('utf-8'))
-        conf['SRC_DOMAIN_CURRENT_SITE'] = re.sub('http(s)?://', '', content)
+        conf['wp-config']['SRC_DOMAIN_CURRENT_SITE'] = \
+            re.sub('http(s)?://', '', content)

@@ -38,6 +38,9 @@ def handle_options():
     parser.add_argument('-n', '--no-cache', action='store_true',
                         help='Run the client without cache')
 
+    parser.add_argument('--no-users', action='store_true',
+                        help='Omit users in migration')
+
     # Parameter to accept json
     parser.add_argument('-j', '--json-file', action='store',
                         help='Load the parameters from a json file')

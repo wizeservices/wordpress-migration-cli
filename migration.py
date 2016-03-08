@@ -23,6 +23,7 @@ class Migration(object):
         self.processes.append(process.DestGetDBCredentialsProcess())
         self.processes.append(process.DestGetSiteUrlProcess())
         self.processes.append(process.SrcGetSiteUrlProcess())
+        self.processes.append(process.SrcGetTableList())
         self.processes.append(process.SrcDoDBBackup())
         self.processes.append(process.SrcDownloadDBBackup())
         self.processes.append(process.SrcDoTar())
@@ -44,6 +45,7 @@ class Migration(object):
 
         if not self.args.no_cache and os.path.exists('.info.json'):
             with open('.info.json') as file:
+                lib.log.debug('Loading json file')
                 self.info = json.loads(file.read())
 
         for proc in self.processes[self.info['step']:]:
@@ -57,6 +59,7 @@ class Migration(object):
                 self.info['step'] += 1
                 with open('.info.json', 'w') as file:
                     file.write(json.dumps(self.info))
+                lib.log.debug(self.info)
                 lib.log.info('Done "%s"', proc.name)
             except Exception as exc:
                 lib.log.error(exc)
