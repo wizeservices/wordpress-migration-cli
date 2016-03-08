@@ -9,31 +9,52 @@ Wordpress migration client is a tool which makes easier to export a wordpress fr
     3. Wp-cli.
 
 2. Machine in the middle (where the tool will run):
-    1. Python 3.
+    1. Manual installation:
+        1. Python 3.
+        ```
+        # Mac osx
+        brew install python3
+        ```
+        2. Pip3.
+        ```
+        easy_install-3.5 pip
+        ```
+        3. Paramiko.
+        ```
+        pip3 install paramiko
+        ```
+        4. Scp.py.
+        ```
+        git clone https://github.com/jbardin/scp.py.git
+        cd scp.py/
+        python3 setup.py install
+        ```
+
+    2. Automatic installation (Mac OS X):
     ```
-    # Mac osx
-    brew install python3
-    ```
-    2. Pip3.
-    ```
-    easy_install-3.5 pip
-    ```
-    3. Paramiko.
-    ```
-    pip3 install paramiko
-    ```
-    4. Scp.py.
-    ```
-    git clone https://github.com/jbardin/scp.py.git
-    cd scp.py/
-    python3 setup.py install
+    sudo bash ./install_macosx.sh
     ```
 
 3. Destination machine:
-    1. Openssh.
-    2. Tar.
-    3. Wp-cli.
-    4. Sed.
+    1. Binaries:
+        1. Openssh.
+        2. Tar.
+        3. Wp-cli.
+        4. Sed.
+    2. Permissions. The client needs to be filled with a user which has the proper rights over the **dest_wpath** (absolute path in the destination machine where wordpress is installed). If you decide to use root user, you need to check if root is allowed to connect by ssh, to do this do the following:
+    ```
+    # If the file does not exist, simply do
+    echo PermitRootLogin yes > /etc/sshd/sshd_config
+
+    grep PermitRootLogin /etc/ssh/sshd_config
+
+    # If it does not print anything
+    echo PermitRootLogin yes >> /etc/sshd/sshd_config
+
+    # If it does not print "PermitRootLogin yes"
+    sed -i 's/PermitRootLogin.*/PermitRootLogin yes/g' /etc/ssh/sshd_config
+
+    ```
 
 ### Usage
 The client by default uses cache, so if it fails and you restart the client it will start where it fails. If you want to disable the cache use the **-n** flag or delete **.info.json** file.
@@ -104,6 +125,9 @@ python3 main.py -j <filename>.json --src-address <ip_address> --src-port <port> 
 16:35:24.070 - INFO - migration.py - Done "Importing DB dump in destination"
 16:35:24.070 - INFO - migration.py - Migration complete
 ```
+
+### Architecture
+![alt tag](https://raw.githubusercontent.com/wizeservices/wordpress-migration-cli/feat/new-model/docs/Architecture.png)
 
 ### Reference
 ```
