@@ -36,7 +36,9 @@ class Migration(object):
         self.processes.append(process.DestErasePreviousWordpress())
         self.processes.append(process.DestCopyWPBackup())
         self.processes.append(process.DestReplaceConf())
-        self.processes.append(process.DestImportDBdump())
+        self.processes.append(process.DestImportDBDump())
+        if self.args.no_posts:
+            self.processes.append(process.DestTruncatePosts())
 
     def execute(self):
         """Will loop over the list of processes to execute each of them"""

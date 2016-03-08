@@ -40,6 +40,8 @@ def handle_options():
 
     parser.add_argument('--no-users', action='store_true',
                         help='Omit users in migration')
+    parser.add_argument('--no-posts', action='store_true',
+                        help='Omit posts in migration')
 
     # Parameter to accept json
     parser.add_argument('-j', '--json-file', action='store',

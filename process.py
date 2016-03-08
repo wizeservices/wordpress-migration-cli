@@ -160,7 +160,7 @@ class DestGetSiteUrlProcess(AbstractProcess):
             re.sub('http(s)?://', '', content)
 
 
-class DestImportDBdump(AbstractProcess):
+class DestImportDBDump(AbstractProcess):
     """Imports the dump into destination"""
 
     def init(self):
@@ -176,6 +176,29 @@ class DestImportDBdump(AbstractProcess):
         status = stdout.channel.recv_exit_status()
         if status != 0:
             raise Exception(stderr.read().decode('utf-8'))
+
+
+class DestTruncatePosts(AbstractProcess):
+    """Imports the dump into destination"""
+
+    def init(self):
+        self.target = AbstractProcess.DEST
+        self.name = 'Importing DB dump in destination'
+
+    def execute(self, ssh, args, conf):
+        tmp = conf['wp-config']
+        cmd = ('tmp=($(mysql -u {0} -p{1} {2} -sNe \'show tables\' '
+               '| grep post)); for table in ${{tmp[@]}}; '
+               'do mysql -u {0} -p{1} {2} -e "truncate table $table"; done')
+        lib.log.debug(cmd)
+        cmd = (cmd.format(tmp['DB_USER'], tmp['DB_PASSWORD'], tmp['DB_NAME']))
+        lib.log.debug(cmd)
+        _, stdout, stderr = ssh.exec_command(cmd)
+        status = stdout.channel.recv_exit_status()
+        content = stderr.read().decode('utf-8').replace('\n', '')
+        if status != 0 or 'ERROR' in content:
+            import pdb; pdb.set_trace()
+            raise Exception(content)
 
 
 class DestReplaceConf(AbstractProcess):
