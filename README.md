@@ -44,12 +44,12 @@ Wordpress migration client is a tool which makes easier to export a wordpress fr
     2. Permissions. The client needs to be filled with a user which has the proper rights over the **dest_wpath** (absolute path in the destination machine where wordpress is installed). If you decide to use root user, you need to check if root is allowed to connect by ssh, to do this do the following as root:
     ```
     # If the file does not exist, simply do
-    echo PermitRootLogin yes > /etc/sshd/sshd_config
+    echo PermitRootLogin yes > /etc/ssh/sshd_config
 
     grep PermitRootLogin /etc/ssh/sshd_config
 
     # If it does not print anything
-    echo PermitRootLogin yes >> /etc/sshd/sshd_config
+    echo PermitRootLogin yes >> /etc/ssh/sshd_config
 
     # If it does not print "PermitRootLogin yes"
     sed -i 's/PermitRootLogin.*/PermitRootLogin yes/g' /etc/ssh/sshd_config
