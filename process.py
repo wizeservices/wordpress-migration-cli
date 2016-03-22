@@ -33,7 +33,7 @@ class DestCreateDBBackup(AbstractProcess):
 
     def init(self):
         self.target = AbstractProcess.DEST
-        self.name = 'Creating database dump from destination'
+        self.name = 'Creating wordpress tar file from destination'
 
     def execute(self, ssh, args, conf):
         cmd = 'tar -cvf /tmp/wp.tar.gz {}'.format(args.dest_wpath)
@@ -65,7 +65,7 @@ class DestCreateWPBackup(AbstractProcess):
 
     def init(self):
         self.target = AbstractProcess.DEST
-        self.name = 'Creating wordpress tar file from destination'
+        self.name = 'Creating database dump from destination'
 
     def execute(self, ssh, args, conf):
         cmd = ('wp --allow-root --path={} db export --add-drop-table '

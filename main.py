@@ -33,7 +33,7 @@ def handle_options():
     parser.add_argument('-l', '--log-level', action='store',
                         choices=['debug', 'info', 'warning', 'error'],
                         default='info',
-                        help='Load the parameters from a json file')
+                        help='Change the log level')
 
     parser.add_argument('-n', '--no-cache', action='store_true',
                         help='Run the client without cache')

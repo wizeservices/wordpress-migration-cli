@@ -1,4 +1,5 @@
 import json
+import os
 import os.path
 
 import paramiko
@@ -43,7 +44,13 @@ class Migration(object):
     def execute(self):
         """Will loop over the list of processes to execute each of them"""
         self.ssh_src = self._ssh_connect('src')
+        if self.ssh_src is None:
+            exit(-1)
+
         self.ssh_dest = self._ssh_connect('dest')
+        if self.ssh_dest is None:
+            self.ssh_src.close()
+            exit(-1)
 
         if not self.args.no_cache and os.path.exists('.info.json'):
             with open('.info.json') as file:
@@ -67,6 +74,7 @@ class Migration(object):
                 lib.log.error(exc)
                 break
         else:
+            os.remove('.info.json')
             lib.log.info('Migration complete')
 
         self.ssh_src.close()
