@@ -2,3 +2,4 @@
 *.dump
 *.tar.gz
 __pycache__/*
+process/__pycache__/*

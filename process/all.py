@@ -1,96 +1,13 @@
-from abc import ABCMeta, abstractmethod
+
 import os.path
 import re
 
-import paramiko
-from paramiko import SSHClient
 from scp import SCPClient
 
 import lib
+from process.common import AbstractProcess
 
-
-class AbstractProcess(object):
-    """Class which defines the process interface"""
-    __metaclass__ = ABCMeta
-    DEST = 0
-    SRC = 1
-    CONS = dict()
-
-    def __init__(self):
-        self.name = None
-        self.target = None
-        self.required = False
-
-    @staticmethod
-    def close_connections():
-        for key in AbstractProcess.CONS:
-            AbstractProcess.CONS[key].close()
-
-    @abstractmethod
-    def init(self):
-        """Initializes the name and target"""
-        pass
-
-    @abstractmethod
-    def execute(self, args, conf):
-        """Implements the command to be run"""
-        pass
-
-
-def _ssh_connect(args, direction):
-    """Creates an ssh connection using the arguments provided"""
-    try:
-        ssh = SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.load_system_host_keys()
-        address = args.__getattribute__(direction + '_address')
-        port = args.__getattribute__(direction + '_port')
-        user = args.__getattribute__(direction + '_user')
-        passw = args.__getattribute__(direction + '_passw')
-        fkey = args.__getattribute__(direction + '_filekey')
-        lib.log.info('Connecting to %s', address)
-        if fkey:
-            key = paramiko.RSAKey.from_private_key_file(fkey)
-            # In case you need to set an user
-            if user:
-                ssh.connect(address, port=port, username=user, pkey=key)
-            else:
-                ssh.connect(address, port=port, pkey=key)
-        else:
-            ssh.connect(address, port=port, username=user, password=passw)
-        lib.log.info('Connection successful')
-        return ssh
-    except Exception as exc:
-        # 'dict_keys' object is not subscriptable
-        # It means that the connection was not successful
-        lib.log.error('Unable to connect: ' + str(exc))
-        exit(-1)
-    return None
-
-
-class SSHConnectSource(AbstractProcess):
-    """Creates wp database dump"""
-
-    def init(self):
-        self.target = AbstractProcess.SRC
-        self.name = 'Connecting to source'
-
-    def execute(self, args, conf):
-        AbstractProcess.CONS[self.target] = _ssh_connect(args, 'src')
-
-
-class SSHConnectDestination(AbstractProcess):
-    """Creates wp database dump"""
-
-    def init(self):
-        self.target = AbstractProcess.DEST
-        self.name = 'Connecting to destination'
-
-    def execute(self, args, conf):
-        AbstractProcess.CONS[self.target] = _ssh_connect(args, 'dest')
-
-
-class DestCreateDBBackup(AbstractProcess):
+class DestCreateDBBackupProcess(AbstractProcess):
     """Creates wp database dump"""
 
     def init(self):
@@ -107,7 +24,7 @@ class DestCreateDBBackup(AbstractProcess):
             raise Exception(stderr.read().decode('utf-8'))
 
 
-class DestCopyWPBackup(AbstractProcess):
+class DestCopyWPBackupProcess(AbstractProcess):
     """Copies the extracted files into the destination folder"""
 
     def init(self):
@@ -124,7 +41,7 @@ class DestCopyWPBackup(AbstractProcess):
             raise Exception(stderr.read().decode('utf-8'))
 
 
-class DestCreateWPBackup(AbstractProcess):
+class DestCreateWPBackupProcess(AbstractProcess):
     """Creates wp database dump"""
 
     def init(self):
@@ -174,7 +91,7 @@ class DestGetDBCredentialsProcess(AbstractProcess):
                                 'source machine'.format(key))
 
 
-class DestDecompressWordpress(AbstractProcess):
+class DestDecompressWordpressProcess(AbstractProcess):
     """Decompresses wordpress tar file in destination"""
 
     def init(self):
@@ -191,7 +108,7 @@ class DestDecompressWordpress(AbstractProcess):
             raise Exception(stderr.read().decode('utf-8'))
 
 
-class DestErasePreviousWordpress(AbstractProcess):
+class DestErasePreviousWordpressProcess(AbstractProcess):
     """Erases wordpress folder from detsination before replacing it"""
 
     def init(self):
@@ -229,7 +146,7 @@ class DestGetSiteUrlProcess(AbstractProcess):
             re.sub('http(s)?://', '', content)
 
 
-class DestImportDBDump(AbstractProcess):
+class DestImportDBDumpProcess(AbstractProcess):
     """Imports the dump into destination"""
 
     def init(self):
@@ -247,7 +164,7 @@ class DestImportDBDump(AbstractProcess):
             raise Exception(stderr.read().decode('utf-8'))
 
 
-class DestTruncatePosts(AbstractProcess):
+class DestTruncatePostsProcess(AbstractProcess):
     """Imports the dump into destination"""
 
     def init(self):
@@ -270,29 +187,7 @@ class DestTruncatePosts(AbstractProcess):
             raise Exception(content)
 
 
-class DestReplaceConf(AbstractProcess):
-    """Replaces database credentials in wp-config.php"""
-
-    def init(self):
-        self.target = AbstractProcess.DEST
-        self.name = 'Replacing original database credential in wp-config.php'
-
-    def execute(self, args, conf):
-        ssh = AbstractProcess.CONS[self.target]
-        for key in conf['wp-config']:
-            cmd = ("sed -i \"s/{0}'[^']*'[^']*/{0}', '{1}/g\""
-                   " {2}/wp-config.php".format(key,
-                                               conf['wp-config'][key],
-                                               args.dest_wpath))
-            lib.log.debug(cmd)
-            _, stdout, _ = ssh.exec_command(cmd)
-            status = stdout.channel.recv_exit_status()
-            if status != 0:
-                lib.log.warning('Unable to execute %s (status = %d)', cmd,
-                                status)
-
-
-class DestUploadDatabaseDump(AbstractProcess):
+class DestUploadDatabaseDumpProcess(AbstractProcess):
     """Uploads wp database dump"""
 
     def init(self):
@@ -305,7 +200,7 @@ class DestUploadDatabaseDump(AbstractProcess):
         scp.put('mysql.dump', '/tmp/mysql.src.dump')
 
 
-class DestUploadTar(AbstractProcess):
+class DestUploadTarProcess(AbstractProcess):
     """Uploads wordpress tar file"""
 
     def init(self):
@@ -318,7 +213,7 @@ class DestUploadTar(AbstractProcess):
         scp.put('wp.tar.gz', '/tmp/wp.src.tar.gz')
 
 
-class SrcDoDBBackup(AbstractProcess):
+class SrcDoDBBackupProcess(AbstractProcess):
     """Creates the wp backup for the database"""
 
     def init(self):
@@ -340,7 +235,7 @@ class SrcDoDBBackup(AbstractProcess):
             raise Exception(stderr.read().decode('utf-8'))
 
 
-class SrcDoTar(AbstractProcess):
+class SrcDoTarProcess(AbstractProcess):
     """Creates a tar file of the wordpress path from the source"""
 
     def init(self):
@@ -357,7 +252,7 @@ class SrcDoTar(AbstractProcess):
             raise Exception(stderr.read().decode('utf-8'))
 
 
-class SrcDownloadDBBackup(AbstractProcess):
+class SrcDownloadDBBackupProcess(AbstractProcess):
     """Downloads the wp backup for the database"""
 
     def init(self):
@@ -370,7 +265,7 @@ class SrcDownloadDBBackup(AbstractProcess):
         scp.get('/tmp/mysql.dump')
 
 
-class SrcDownloadTar(AbstractProcess):
+class SrcDownloadTarProcess(AbstractProcess):
     """Downloads all the backup files from the server"""
 
     def init(self):
@@ -386,7 +281,7 @@ class SrcDownloadTar(AbstractProcess):
             raise Exception('Tar file does not exist')
 
 
-class SrcGetTableList(AbstractProcess):
+class SrcGetTableListProcess(AbstractProcess):
     """Gathers the list of tables
     """
 

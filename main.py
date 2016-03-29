@@ -38,6 +38,13 @@ def handle_options():
     parser.add_argument('-n', '--no-cache', action='store_true',
                         help='Run the client without cache')
 
+    parser.add_argument('--fix-destination-hostname', action='store_true',
+                        help='Change the hostname on wp_config and in the DB')
+    parser.add_argument('--current-site', action='store',
+                        help='Only valid when --fix-destination-hostname')
+    parser.add_argument('--new-site', action='store',
+                        help='Only valid when --fix-destination-hostname')
+
     parser.add_argument('--no-users', action='store_true',
                         help='Omit users in migration')
     parser.add_argument('--no-posts', action='store_true',
