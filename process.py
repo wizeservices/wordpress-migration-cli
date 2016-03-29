@@ -2,6 +2,8 @@ from abc import ABCMeta, abstractmethod
 import os.path
 import re
 
+import paramiko
+from paramiko import SSHClient
 from scp import SCPClient
 
 import lib
@@ -12,10 +14,17 @@ class AbstractProcess(object):
     __metaclass__ = ABCMeta
     DEST = 0
     SRC = 1
+    CONS = dict()
 
     def __init__(self):
         self.name = None
         self.target = None
+        self.required = False
+
+    @staticmethod
+    def close_connections():
+        for key in AbstractProcess.CONS:
+            AbstractProcess.CONS[key].close()
 
     @abstractmethod
     def init(self):
@@ -23,9 +32,62 @@ class AbstractProcess(object):
         pass
 
     @abstractmethod
-    def execute(self, ssh, args, conf):
+    def execute(self, args, conf):
         """Implements the command to be run"""
         pass
+
+
+def _ssh_connect(args, direction):
+    """Creates an ssh connection using the arguments provided"""
+    try:
+        ssh = SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.load_system_host_keys()
+        address = args.__getattribute__(direction + '_address')
+        port = args.__getattribute__(direction + '_port')
+        user = args.__getattribute__(direction + '_user')
+        passw = args.__getattribute__(direction + '_passw')
+        fkey = args.__getattribute__(direction + '_filekey')
+        lib.log.info('Connecting to %s', address)
+        if fkey:
+            key = paramiko.RSAKey.from_private_key_file(fkey)
+            # In case you need to set an user
+            if user:
+                ssh.connect(address, port=port, username=user, pkey=key)
+            else:
+                ssh.connect(address, port=port, pkey=key)
+        else:
+            ssh.connect(address, port=port, username=user, password=passw)
+        lib.log.info('Connection successful')
+        return ssh
+    except Exception as exc:
+        # 'dict_keys' object is not subscriptable
+        # It means that the connection was not successful
+        lib.log.error('Unable to connect: ' + str(exc))
+        exit(-1)
+    return None
+
+
+class SSHConnectSource(AbstractProcess):
+    """Creates wp database dump"""
+
+    def init(self):
+        self.target = AbstractProcess.SRC
+        self.name = 'Connecting to source'
+
+    def execute(self, args, conf):
+        AbstractProcess.CONS[self.target] = _ssh_connect(args, 'src')
+
+
+class SSHConnectDestination(AbstractProcess):
+    """Creates wp database dump"""
+
+    def init(self):
+        self.target = AbstractProcess.DEST
+        self.name = 'Connecting to destination'
+
+    def execute(self, args, conf):
+        AbstractProcess.CONS[self.target] = _ssh_connect(args, 'dest')
 
 
 class DestCreateDBBackup(AbstractProcess):
@@ -35,7 +97,8 @@ class DestCreateDBBackup(AbstractProcess):
         self.target = AbstractProcess.DEST
         self.name = 'Creating wordpress tar file from destination'
 
-    def execute(self, ssh, args, conf):
+    def execute(self, args, conf):
+        ssh = AbstractProcess.CONS[self.target]
         cmd = 'tar -cvf /tmp/wp.tar.gz {}'.format(args.dest_wpath)
         lib.log.debug(cmd)
         _, stdout, stderr = ssh.exec_command(cmd)
@@ -51,7 +114,8 @@ class DestCopyWPBackup(AbstractProcess):
         self.target = AbstractProcess.DEST
         self.name = 'Copying source backup into destination folder'
 
-    def execute(self, ssh, args, conf):
+    def execute(self, args, conf):
+        ssh = AbstractProcess.CONS[self.target]
         cmd = 'cp -r /tmp/{}/* {}/'.format(args.src_wpath, args.dest_wpath)
         lib.log.debug(cmd)
         _, stdout, stderr = ssh.exec_command(cmd)
@@ -67,7 +131,8 @@ class DestCreateWPBackup(AbstractProcess):
         self.target = AbstractProcess.DEST
         self.name = 'Creating database dump from destination'
 
-    def execute(self, ssh, args, conf):
+    def execute(self, args, conf):
+        ssh = AbstractProcess.CONS[self.target]
         cmd = ('wp --allow-root --path={} db export --add-drop-table '
                '/tmp/mysql.dump'.format(args.dest_wpath))
         lib.log.debug(cmd)
@@ -84,7 +149,8 @@ class DestGetDBCredentialsProcess(AbstractProcess):
         self.target = AbstractProcess.DEST
         self.name = 'Reading wp-config.php from destination'
 
-    def execute(self, ssh, args, conf):
+    def execute(self, args, conf):
+        ssh = AbstractProcess.CONS[self.target]
         cmd = 'cat {}/wp-config.php'.format(args.dest_wpath)
         lib.log.debug(cmd)
         _, stdout, stderr = ssh.exec_command(cmd)
@@ -115,7 +181,8 @@ class DestDecompressWordpress(AbstractProcess):
         self.target = AbstractProcess.DEST
         self.name = 'Decompressing wordpress source in destination'
 
-    def execute(self, ssh, args, conf):
+    def execute(self, args, conf):
+        ssh = AbstractProcess.CONS[self.target]
         cmd = 'tar -xvf /tmp/wp.src.tar.gz -C /tmp'
         lib.log.debug(cmd)
         _, stdout, stderr = ssh.exec_command(cmd)
@@ -131,7 +198,8 @@ class DestErasePreviousWordpress(AbstractProcess):
         self.target = AbstractProcess.DEST
         self.name = 'Erasing previous wordpress contents from destination'
 
-    def execute(self, ssh, args, conf):
+    def execute(self, args, conf):
+        ssh = AbstractProcess.CONS[self.target]
         cmd = 'rm -rf {}/*'.format(args.dest_wpath)
         lib.log.debug(cmd)
         _, stdout, stderr = ssh.exec_command(cmd)
@@ -147,7 +215,8 @@ class DestGetSiteUrlProcess(AbstractProcess):
         self.target = AbstractProcess.DEST
         self.name = 'Get site url from destination'
 
-    def execute(self, ssh, args, conf):
+    def execute(self, args, conf):
+        ssh = AbstractProcess.CONS[self.target]
         cmd = ('wp --allow-root --path={} option get siteurl'
                .format(args.dest_wpath))
         lib.log.debug(cmd)
@@ -167,8 +236,8 @@ class DestImportDBDump(AbstractProcess):
         self.target = AbstractProcess.DEST
         self.name = 'Importing DB dump in destination'
 
-    def execute(self, ssh, args, conf):
-
+    def execute(self, args, conf):
+        ssh = AbstractProcess.CONS[self.target]
         cmd = ('wp --allow-root --path={} db import /tmp/mysql.src.dump'
                .format(args.dest_wpath))
         lib.log.debug(cmd)
@@ -185,7 +254,8 @@ class DestTruncatePosts(AbstractProcess):
         self.target = AbstractProcess.DEST
         self.name = 'Importing DB dump in destination'
 
-    def execute(self, ssh, args, conf):
+    def execute(self, args, conf):
+        ssh = AbstractProcess.CONS[self.target]
         tmp = conf['wp-config']
         cmd = ('tmp=($(mysql -u {0} -p{1} {2} -sNe \'show tables\' '
                '| grep post)); for table in ${{tmp[@]}}; '
@@ -205,9 +275,10 @@ class DestReplaceConf(AbstractProcess):
 
     def init(self):
         self.target = AbstractProcess.DEST
-        self.name = 'Replacing original database creadential in wp-config.php'
+        self.name = 'Replacing original database credential in wp-config.php'
 
-    def execute(self, ssh, args, conf):
+    def execute(self, args, conf):
+        ssh = AbstractProcess.CONS[self.target]
         for key in conf['wp-config']:
             cmd = ("sed -i \"s/{0}'[^']*'[^']*/{0}', '{1}/g\""
                    " {2}/wp-config.php".format(key,
@@ -228,7 +299,8 @@ class DestUploadDatabaseDump(AbstractProcess):
         self.target = AbstractProcess.DEST
         self.name = 'Uploading database dump to destination'
 
-    def execute(self, ssh, args, conf):
+    def execute(self, args, conf):
+        ssh = AbstractProcess.CONS[self.target]
         scp = SCPClient(ssh.get_transport())
         scp.put('mysql.dump', '/tmp/mysql.src.dump')
 
@@ -240,7 +312,8 @@ class DestUploadTar(AbstractProcess):
         self.target = AbstractProcess.DEST
         self.name = 'Uploading wordpress tar file dump to destination'
 
-    def execute(self, ssh, args, conf):
+    def execute(self, args, conf):
+        ssh = AbstractProcess.CONS[self.target]
         scp = SCPClient(ssh.get_transport())
         scp.put('wp.tar.gz', '/tmp/wp.src.tar.gz')
 
@@ -252,7 +325,8 @@ class SrcDoDBBackup(AbstractProcess):
         self.target = AbstractProcess.SRC
         self.name = 'Creating wordpress database dump from source'
 
-    def execute(self, ssh, args, conf):
+    def execute(self, args, conf):
+        ssh = AbstractProcess.CONS[self.target]
         cmd = ('wp --allow-root --path={} search-replace --network --precise '
                '{} {} {} --export=/tmp/mysql.dump'
                .format(args.src_wpath,
@@ -273,7 +347,8 @@ class SrcDoTar(AbstractProcess):
         self.target = AbstractProcess.SRC
         self.name = 'Creating tar file'
 
-    def execute(self, ssh, args, conf):
+    def execute(self, args, conf):
+        ssh = AbstractProcess.CONS[self.target]
         cmd = 'tar -cvf /tmp/wp.tar.gz {}'.format(args.src_wpath)
         lib.log.debug(cmd)
         _, stdout, stderr = ssh.exec_command(cmd)
@@ -289,7 +364,8 @@ class SrcDownloadDBBackup(AbstractProcess):
         self.target = AbstractProcess.SRC
         self.name = 'Downloading wordpress database dump from source'
 
-    def execute(self, ssh, args, conf):
+    def execute(self, args, conf):
+        ssh = AbstractProcess.CONS[self.target]
         scp = SCPClient(ssh.get_transport())
         scp.get('/tmp/mysql.dump')
 
@@ -301,7 +377,8 @@ class SrcDownloadTar(AbstractProcess):
         self.target = AbstractProcess.SRC
         self.name = 'Downloading tar file from source'
 
-    def execute(self, ssh, args, conf):
+    def execute(self, args, conf):
+        ssh = AbstractProcess.CONS[self.target]
         scp = SCPClient(ssh.get_transport())
         scp.get('/tmp/wp.tar.gz')
         # It checks if the file exists
@@ -317,7 +394,8 @@ class SrcGetTableList(AbstractProcess):
         self.target = AbstractProcess.SRC
         self.name = 'Get list of tables'
 
-    def execute(self, ssh, args, conf):
+    def execute(self, args, conf):
+        ssh = AbstractProcess.CONS[self.target]
         cmd = ('wp --allow-root --path={} db tables \'wp_*\' --format=csv'
                .format(args.src_wpath))
         lib.log.debug(cmd)
@@ -345,7 +423,8 @@ class SrcGetSiteUrlProcess(AbstractProcess):
         self.target = AbstractProcess.SRC
         self.name = 'Get site url from source'
 
-    def execute(self, ssh, args, conf):
+    def execute(self, args, conf):
+        ssh = AbstractProcess.CONS[self.target]
         cmd = ('wp --allow-root --path={} option get siteurl'
                .format(args.src_wpath))
         lib.log.debug(cmd)
