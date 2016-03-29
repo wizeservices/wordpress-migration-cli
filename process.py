@@ -197,7 +197,6 @@ class DestTruncatePosts(AbstractProcess):
         status = stdout.channel.recv_exit_status()
         content = stderr.read().decode('utf-8').replace('\n', '')
         if status != 0 or 'ERROR' in content:
-            import pdb; pdb.set_trace()
             raise Exception(content)
 
 
