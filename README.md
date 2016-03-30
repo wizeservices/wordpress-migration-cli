@@ -89,48 +89,11 @@ python3 main.py -j <filename>.json --src-address <ip_address> --src-port <port> 
 ```
 
 #### Output example
-```
-16:34:28.585 - INFO - migration.py - Connecting to mydomain
-16:34:29.205 - INFO - migration.py - Connection successful
-16:34:29.208 - INFO - migration.py - Connecting to 127.0.0.1
-16:34:29.326 - INFO - migration.py - Connection successful
-16:34:29.326 - INFO - migration.py - Starts "Reading wp-config.php from destination"
-16:34:29.655 - INFO - migration.py - Done "Reading wp-config.php from destination"
-16:34:29.655 - INFO - migration.py - Starts "Get site url from destination"
-16:34:29.892 - INFO - migration.py - Done "Get site url from destination"
-16:34:29.892 - INFO - migration.py - Starts "Get site url from source"
-16:34:30.221 - INFO - migration.py - Done "Get site url from source"
-16:34:30.221 - INFO - migration.py - Starts "Creating wordpress database dump from source"
-16:34:31.692 - INFO - migration.py - Done "Creating wordpress database dump from source"
-16:34:31.692 - INFO - migration.py - Starts "Downloading wordpress database dump from source"
-16:34:34.610 - INFO - migration.py - Done "Downloading wordpress database dump from source"
-16:34:34.610 - INFO - migration.py - Starts "Creating tar file"
-16:34:36.863 - INFO - migration.py - Done "Creating tar file"
-16:34:36.863 - INFO - migration.py - Starts "Downloading tar file from source"
-16:35:09.333 - INFO - migration.py - Done "Downloading tar file from source"
-16:35:09.333 - INFO - migration.py - Starts "Uploading database dump to destination"
-16:35:13.359 - INFO - migration.py - Done "Uploading database dump to destination"
-16:35:13.359 - INFO - migration.py - Starts "Uploading wordpress tar file dump to destination"
-16:35:17.923 - INFO - migration.py - Done "Uploading wordpress tar file dump to destination"
-16:35:17.924 - INFO - migration.py - Starts "Creating database dump from destination"
-16:35:19.840 - INFO - migration.py - Done "Creating database dump from destination"
-16:35:19.841 - INFO - migration.py - Starts "Creating wordpress tar file from destination"
-16:35:20.020 - INFO - migration.py - Done "Creating wordpress tar file from destination"
-16:35:20.020 - INFO - migration.py - Starts "Decompressing wordpress source in destination"
-16:35:21.987 - INFO - migration.py - Done "Decompressing wordpress source in destination"
-16:35:21.987 - INFO - migration.py - Starts "Erasing previous wordpress contents from destination"
-16:35:22.040 - INFO - migration.py - Done "Erasing previous wordpress contents from destination"
-16:35:22.040 - INFO - migration.py - Starts "Copying source backup into destination folder"
-16:35:22.944 - INFO - migration.py - Done "Copying source backup into destination folder"
-16:35:22.944 - INFO - migration.py - Starts "Replacing original database creadential in wp-config.php"
-16:35:22.976 - INFO - migration.py - Done "Replacing original database creadential in wp-config.php"
-16:35:22.976 - INFO - migration.py - Starts "Importing DB dump in destination"
-16:35:24.070 - INFO - migration.py - Done "Importing DB dump in destination"
-16:35:24.070 - INFO - migration.py - Migration complete
-```
+Go to the following link:
+https://asciinema.org/a/40740
 
 ### Architecture
-![alt tag](https://raw.githubusercontent.com/wizeservices/wordpress-migration-cli/feat/new-model/docs/Architecture.png)
+![alt tag](https://raw.githubusercontent.com/wizeservices/wordpress-migration-cli/develop/docs/Architecture.png)
 
 ### Reference
 ```
