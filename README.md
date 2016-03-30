@@ -89,51 +89,11 @@ python3 main.py -j <filename>.json --src-address <ip_address> --src-port <port> 
 ```
 
 #### Output example
-Go to the following link:
+1. For the complete migration go to the following link:  
 https://asciinema.org/a/40740
+
+2. For the fix destination hostname feature go to the following link:  
+https://asciinema.org/a/1ah6seolg5jipt98o75wca4wm
 
 ### Architecture
 ![alt tag](https://raw.githubusercontent.com/wizeservices/wordpress-migration-cli/develop/docs/Architecture.png)
-
-### Reference
-```
-usage: main.py [-h] [-l {debug,info,warning,error}] [-n] [-j JSON_FILE]
-               [--src-address SRC_ADDRESS] [--src-port SRC_PORT]
-               [--src_filekey SRC_FILEKEY] [--src-user SRC_USER]
-               [--src-passw SRC_PASSW] [--src-wpath SRC_WPATH]
-               [--dest-address DEST_ADDRESS] [--dest-port DEST_PORT]
-               [--dest_filekey DEST_FILEKEY] [--dest-user DEST_USER]
-               [--dest-passw DEST_PASSW] [--dest-wpath DEST_WPATH]
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -l {debug,info,warning,error}, --log-level {debug,info,warning,error}
-                        Load the parameters from a json file
-  -n, --no-cache        Run the client without cache
-  -j JSON_FILE, --json-file JSON_FILE
-                        Load the parameters from a json file
-  --src-address SRC_ADDRESS
-                        The address of the source machine
-  --src-port SRC_PORT   The port of the source machine
-  --src_filekey SRC_FILEKEY
-                        The ssh private key file for the source machine
-  --src-user SRC_USER   The username to use to connect to the sourcemachine
-  --src-passw SRC_PASSW
-                        The password to use to connect top the sourcemachine
-  --src-wpath SRC_WPATH
-                        Set wordpress path for the source machine
-  --dest-address DEST_ADDRESS
-                        The address of the destination machine
-  --dest-port DEST_PORT
-                        The port of the destination machine
-  --dest_filekey DEST_FILEKEY
-                        The ssh private key file for the destination machine
-  --dest-user DEST_USER
-                        The username to use to connect to the destination
-                        machine
-  --dest-passw DEST_PASSW
-                        The password to use to connect top the destination
-                        machine
-  --dest-wpath DEST_WPATH
-                        Set wordpress path for the destination machine
-```
