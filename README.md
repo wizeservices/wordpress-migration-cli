@@ -89,11 +89,11 @@ python3 main.py -j <filename>.json --src-address <ip_address> --src-port <port> 
 ```
 
 #### Output example
-1. For the complete migration go to the following link:  
-https://asciinema.org/a/40740
+##### Complete Migration Result
+[![asciicast](https://asciinema.org/a/40740.png)](https://asciinema.org/a/40740)
 
-2. For the fix destination hostname feature go to the following link:  
-https://asciinema.org/a/1ah6seolg5jipt98o75wca4wm
+##### Fix Destination Hostname Feature
+[![asciicast](https://asciinema.org/a/1ah6seolg5jipt98o75wca4wm.png)](https://asciinema.org/a/1ah6seolg5jipt98o75wca4wm)
 
 ### Architecture
 ![alt tag](https://raw.githubusercontent.com/wizeservices/wordpress-migration-cli/develop/docs/Architecture.png)
