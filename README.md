@@ -89,88 +89,11 @@ python3 main.py -j <filename>.json --src-address <ip_address> --src-port <port> 
 ```
 
 #### Output example
-```
-16:34:28.585 - INFO - migration.py - Connecting to mydomain
-16:34:29.205 - INFO - migration.py - Connection successful
-16:34:29.208 - INFO - migration.py - Connecting to 127.0.0.1
-16:34:29.326 - INFO - migration.py - Connection successful
-16:34:29.326 - INFO - migration.py - Starts "Reading wp-config.php from destination"
-16:34:29.655 - INFO - migration.py - Done "Reading wp-config.php from destination"
-16:34:29.655 - INFO - migration.py - Starts "Get site url from destination"
-16:34:29.892 - INFO - migration.py - Done "Get site url from destination"
-16:34:29.892 - INFO - migration.py - Starts "Get site url from source"
-16:34:30.221 - INFO - migration.py - Done "Get site url from source"
-16:34:30.221 - INFO - migration.py - Starts "Creating wordpress database dump from source"
-16:34:31.692 - INFO - migration.py - Done "Creating wordpress database dump from source"
-16:34:31.692 - INFO - migration.py - Starts "Downloading wordpress database dump from source"
-16:34:34.610 - INFO - migration.py - Done "Downloading wordpress database dump from source"
-16:34:34.610 - INFO - migration.py - Starts "Creating tar file"
-16:34:36.863 - INFO - migration.py - Done "Creating tar file"
-16:34:36.863 - INFO - migration.py - Starts "Downloading tar file from source"
-16:35:09.333 - INFO - migration.py - Done "Downloading tar file from source"
-16:35:09.333 - INFO - migration.py - Starts "Uploading database dump to destination"
-16:35:13.359 - INFO - migration.py - Done "Uploading database dump to destination"
-16:35:13.359 - INFO - migration.py - Starts "Uploading wordpress tar file dump to destination"
-16:35:17.923 - INFO - migration.py - Done "Uploading wordpress tar file dump to destination"
-16:35:17.924 - INFO - migration.py - Starts "Creating database dump from destination"
-16:35:19.840 - INFO - migration.py - Done "Creating database dump from destination"
-16:35:19.841 - INFO - migration.py - Starts "Creating wordpress tar file from destination"
-16:35:20.020 - INFO - migration.py - Done "Creating wordpress tar file from destination"
-16:35:20.020 - INFO - migration.py - Starts "Decompressing wordpress source in destination"
-16:35:21.987 - INFO - migration.py - Done "Decompressing wordpress source in destination"
-16:35:21.987 - INFO - migration.py - Starts "Erasing previous wordpress contents from destination"
-16:35:22.040 - INFO - migration.py - Done "Erasing previous wordpress contents from destination"
-16:35:22.040 - INFO - migration.py - Starts "Copying source backup into destination folder"
-16:35:22.944 - INFO - migration.py - Done "Copying source backup into destination folder"
-16:35:22.944 - INFO - migration.py - Starts "Replacing original database creadential in wp-config.php"
-16:35:22.976 - INFO - migration.py - Done "Replacing original database creadential in wp-config.php"
-16:35:22.976 - INFO - migration.py - Starts "Importing DB dump in destination"
-16:35:24.070 - INFO - migration.py - Done "Importing DB dump in destination"
-16:35:24.070 - INFO - migration.py - Migration complete
-```
+##### Complete Migration Result
+[![asciicast](https://asciinema.org/a/40740.png)](https://asciinema.org/a/40740)
+
+##### Fix Destination Hostname Feature
+[![asciicast](https://asciinema.org/a/1ah6seolg5jipt98o75wca4wm.png)](https://asciinema.org/a/1ah6seolg5jipt98o75wca4wm)
 
 ### Architecture
-![alt tag](https://raw.githubusercontent.com/wizeservices/wordpress-migration-cli/feat/new-model/docs/Architecture.png)
-
-### Reference
-```
-usage: main.py [-h] [-l {debug,info,warning,error}] [-n] [-j JSON_FILE]
-               [--src-address SRC_ADDRESS] [--src-port SRC_PORT]
-               [--src_filekey SRC_FILEKEY] [--src-user SRC_USER]
-               [--src-passw SRC_PASSW] [--src-wpath SRC_WPATH]
-               [--dest-address DEST_ADDRESS] [--dest-port DEST_PORT]
-               [--dest_filekey DEST_FILEKEY] [--dest-user DEST_USER]
-               [--dest-passw DEST_PASSW] [--dest-wpath DEST_WPATH]
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -l {debug,info,warning,error}, --log-level {debug,info,warning,error}
-                        Load the parameters from a json file
-  -n, --no-cache        Run the client without cache
-  -j JSON_FILE, --json-file JSON_FILE
-                        Load the parameters from a json file
-  --src-address SRC_ADDRESS
-                        The address of the source machine
-  --src-port SRC_PORT   The port of the source machine
-  --src_filekey SRC_FILEKEY
-                        The ssh private key file for the source machine
-  --src-user SRC_USER   The username to use to connect to the sourcemachine
-  --src-passw SRC_PASSW
-                        The password to use to connect top the sourcemachine
-  --src-wpath SRC_WPATH
-                        Set wordpress path for the source machine
-  --dest-address DEST_ADDRESS
-                        The address of the destination machine
-  --dest-port DEST_PORT
-                        The port of the destination machine
-  --dest_filekey DEST_FILEKEY
-                        The ssh private key file for the destination machine
-  --dest-user DEST_USER
-                        The username to use to connect to the destination
-                        machine
-  --dest-passw DEST_PASSW
-                        The password to use to connect top the destination
-                        machine
-  --dest-wpath DEST_WPATH
-                        Set wordpress path for the destination machine
-```
+![alt tag](https://raw.githubusercontent.com/wizeservices/wordpress-migration-cli/develop/docs/Architecture.png)
