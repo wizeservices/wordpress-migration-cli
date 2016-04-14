@@ -97,8 +97,10 @@ class DestReplaceConfProcess(AbstractProcess):
     def execute(self, args, conf):
         ssh = AbstractProcess.CONS[self.target]
         for key in conf['wp-config']:
-            cmd = ("sed -i \"s/{0}'[^']*'[^']*/{0}', '{1}/g\""
-                   " {2}/wp-config.php".format(key,
+            sudo = 'sudo ' if args.dest_sudo else ''
+            cmd = ("{0}sed -i \"s/{1}'[^']*'[^']*/{1}', '{2}/g\""
+                   " {3}/wp-config.php".format(sudo,
+                                               key,
                                                conf['wp-config'][key],
                                                args.dest_wpath))
             lib.log.debug(cmd)

@@ -38,6 +38,10 @@ def handle_options():
     parser.add_argument('-n', '--no-cache', action='store_true',
                         help='Run the client without cache')
 
+    parser.add_argument('--dest-sudo', action='store_true',
+                        help='The destination username is not root and needs '
+                             'sudo')
+
     parser.add_argument('--fix-destination-hostname', action='store_true',
                         help='Change the hostname on wp_config and in the DB')
     parser.add_argument('--current-site', action='store',
