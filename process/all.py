@@ -33,7 +33,10 @@ class DestCopyWPBackupProcess(AbstractProcess):
 
     def execute(self, args, conf):
         ssh = AbstractProcess.CONS[self.target]
-        cmd = 'cp -r /tmp/{}/* {}/'.format(args.src_wpath, args.dest_wpath)
+        sudo = 'sudo ' if args.dest_sudo else ''
+        cmd = '{}cp -r /tmp/{}/* {}/'.format(sudo,
+                                             args.src_wpath,
+                                             args.dest_wpath)
         lib.log.debug(cmd)
         _, stdout, stderr = ssh.exec_command(cmd)
         status = stdout.channel.recv_exit_status()
@@ -117,7 +120,8 @@ class DestErasePreviousWordpressProcess(AbstractProcess):
 
     def execute(self, args, conf):
         ssh = AbstractProcess.CONS[self.target]
-        cmd = 'rm -rf {}/*'.format(args.dest_wpath)
+        sudo = 'sudo ' if args.dest_sudo else ''
+        cmd = '{}rm -rf {}/*'.format(sudo, args.dest_wpath)
         lib.log.debug(cmd)
         _, stdout, stderr = ssh.exec_command(cmd)
         status = stdout.channel.recv_exit_status()
