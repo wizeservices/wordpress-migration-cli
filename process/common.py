@@ -42,6 +42,8 @@ def _ssh_connect(args, direction):
         ssh.load_system_host_keys()
         address = args.__getattribute__(direction + '_address')
         port = args.__getattribute__(direction + '_port')
+        if isinstance(port, str):
+            port = int(port)
         user = args.__getattribute__(direction + '_user')
         passw = args.__getattribute__(direction + '_passw')
         fkey = args.__getattribute__(direction + '_filekey')
