@@ -200,7 +200,7 @@ class DestUploadDatabaseDumpProcess(AbstractProcess):
 
     def execute(self, args, conf):
         ssh = AbstractProcess.CONS[self.target]
-        scp = SCPClient(ssh.get_transport())
+        scp = SCPClient(ssh.get_transport(), socket_timeout=300.0)
         scp.put('mysql.dump', '/tmp/mysql.src.dump')
 
 
@@ -213,7 +213,7 @@ class DestUploadTarProcess(AbstractProcess):
 
     def execute(self, args, conf):
         ssh = AbstractProcess.CONS[self.target]
-        scp = SCPClient(ssh.get_transport())
+        scp = SCPClient(ssh.get_transport(), socket_timeout=300.0)
         scp.put('wp.tar.gz', '/tmp/wp.src.tar.gz')
 
 
@@ -265,7 +265,7 @@ class SrcDownloadDBBackupProcess(AbstractProcess):
 
     def execute(self, args, conf):
         ssh = AbstractProcess.CONS[self.target]
-        scp = SCPClient(ssh.get_transport())
+        scp = SCPClient(ssh.get_transport(), socket_timeout=300.0)
         scp.get('/tmp/mysql.dump')
 
 
@@ -278,7 +278,7 @@ class SrcDownloadTarProcess(AbstractProcess):
 
     def execute(self, args, conf):
         ssh = AbstractProcess.CONS[self.target]
-        scp = SCPClient(ssh.get_transport())
+        scp = SCPClient(ssh.get_transport(), socket_timeout=300.0)
         scp.get('/tmp/wp.tar.gz')
         # It checks if the file exists
         if not os.path.exists('wp.tar.gz'):

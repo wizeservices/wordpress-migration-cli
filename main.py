@@ -30,7 +30,7 @@ def handle_options():
     Returns the arguments after being parsed from argv
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('-l', '--log-level', action='store',
+    parser.add_argument('-l', '--log-level', action='store', type=str,
                         choices=['debug', 'info', 'warning', 'error'],
                         default='info',
                         help='Change the log level')
@@ -44,9 +44,9 @@ def handle_options():
 
     parser.add_argument('--fix-destination-hostname', action='store_true',
                         help='Change the hostname on wp_config and in the DB')
-    parser.add_argument('--current-site', action='store',
+    parser.add_argument('--current-site', action='store', type=str,
                         help='Only valid when --fix-destination-hostname')
-    parser.add_argument('--new-site', action='store',
+    parser.add_argument('--new-site', action='store', type=str,
                         help='Only valid when --fix-destination-hostname')
 
     parser.add_argument('--no-users', action='store_true',
@@ -55,44 +55,44 @@ def handle_options():
                         help='Omit posts in migration')
 
     # Parameter to accept json
-    parser.add_argument('-j', '--json-file', action='store',
+    parser.add_argument('-j', '--json-file', action='store', type=str,
                         help='Load the parameters from a json file')
 
     # Src address and credentials
-    parser.add_argument('--src-address', action='store',
+    parser.add_argument('--src-address', action='store', type=str,
                         help='The address of the source machine')
-    parser.add_argument('--src-port', action='store', default=22,
+    parser.add_argument('--src-port', action='store', default=22, type=int,
                         help='The port of the source machine')
-    parser.add_argument('--src_filekey', action='store',
+    parser.add_argument('--src_filekey', action='store', type=str,
                         help='The ssh private key file for the source machine')
-    parser.add_argument('--src-user', action='store',
+    parser.add_argument('--src-user', action='store', type=str,
                         help='The username to use to connect to the source'
                              'machine')
-    parser.add_argument('--src-passw', action='store',
+    parser.add_argument('--src-passw', action='store', type=str,
                         help='The password to use to connect top the source'
                              'machine')
 
     # Wordpress info for src
-    parser.add_argument('--src-wpath', action='store',
+    parser.add_argument('--src-wpath', action='store', type=str,
                         help='Set wordpress path for the source machine')
 
     # Dest address and credentials
-    parser.add_argument('--dest-address', action='store',
+    parser.add_argument('--dest-address', action='store', type=str,
                         help='The address of the destination machine')
-    parser.add_argument('--dest-port', action='store', default=22,
+    parser.add_argument('--dest-port', action='store', default=22, type=int,
                         help='The port of the destination machine')
-    parser.add_argument('--dest_filekey', action='store',
+    parser.add_argument('--dest_filekey', action='store', type=str,
                         help='The ssh private key file for the destination '
                              'machine')
-    parser.add_argument('--dest-user', action='store',
+    parser.add_argument('--dest-user', action='store', type=str,
                         help='The username to use to connect to the '
                              'destination machine')
-    parser.add_argument('--dest-passw', action='store',
+    parser.add_argument('--dest-passw', action='store', type=str,
                         help='The password to use to connect top the '
                              'destination machine')
 
     # Wordpress info for dest
-    parser.add_argument('--dest-wpath', action='store',
+    parser.add_argument('--dest-wpath', action='store', type=str,
                         help='Set wordpress path for the destination machine')
 
     args = parser.parse_args()
