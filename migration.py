@@ -35,11 +35,21 @@ class Migration(object):
         self.processes.append(process.all.SrcGetSiteUrlProcess())
         self.processes.append(process.all.SrcGetTableListProcess())
         self.processes.append(process.all.SrcDoDBBackupProcess())
-        self.processes.append(process.all.SrcDownloadDBBackupProcess())
         self.processes.append(process.all.SrcDoTarProcess())
-        self.processes.append(process.all.SrcDownloadTarProcess())
-        self.processes.append(process.all.DestUploadDatabaseDumpProcess())
-        self.processes.append(process.all.DestUploadTarProcess())
+        if self.args.fast_copy:
+            if self.args.dest_filekey:
+                # It needs to upload only if the destination has a filekey
+                self.processes.append(process.all.SrcCopyDestinationFileKeyProcess())
+            self.processes.append(process.all.SrcDownloadDBBackupProcess())
+            self.processes.append(process.all.SrcDownloadTarProcess())
+        else:
+            # If the user selected fast copy, the tool won't need to upload
+            # anything, because the backup is transferred directly from source
+            # to destination
+            self.processes.append(process.all.SrcDownloadDBBackupProcess())
+            self.processes.append(process.all.SrcDownloadTarProcess())
+            self.processes.append(process.all.DestUploadDatabaseDumpProcess())
+            self.processes.append(process.all.DestUploadTarProcess())
         self.processes.append(process.all.DestCreateDBBackupProcess())
         self.processes.append(process.all.DestCreateWPBackupProcess())
         self.processes.append(process.all.DestDecompressWordpressProcess())
@@ -84,16 +94,23 @@ class Migration(object):
 
         tmp = [item for item in self.processes[:self.info['step']]
                if item.required]
+        omit_count = len(tmp)
         tmp.extend(self.processes[self.info['step']:])
+        self.info['process_list'] = {idx:str(item) for idx, item in enumerate(self.processes)}
+        index = 0
         for proc in tmp:
             try:
                 proc.init()
                 lib.log.info('Starts "%s"', proc.name)
                 proc.execute(self.args, self.info['conf'])
                 lib.log.info('Done "%s"', proc.name)
-                self.info['step'] += 1
+                # It does not add another step when doing a required step
+                # from the second run
+                if index >= omit_count:
+                    self.info['step'] += 1
+                index += 1
                 with open('.info.json', 'w') as file:
-                    file.write(json.dumps(self.info))
+                    file.write(json.dumps(self.info, indent=2, sort_keys=True))
                 lib.log.debug(self.info)
             except Exception as exc:
                 lib.log.error(exc)
