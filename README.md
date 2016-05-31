@@ -97,3 +97,77 @@ python3 main.py -j <filename>.json --src-address <ip_address> --src-port <port> 
 
 ### Architecture
 ![alt tag](https://raw.githubusercontent.com/wizeservices/wordpress-migration-cli/develop/docs/Architecture.png)
+
+
+###Scenarios
+####Source and destination machine
+All the scenarios below can be mixed, for instance ```python3 main.py -j file.json --dest-sudo --no-users --no-posts --fast-copy```. The json file used in the scenarios below is the following:
+```
+{
+    "src_address": "127.0.0.1",
+    "src_user": "vagrant",
+    "src_passw": "vagrant",
+    "src_wpath": "/var/www/app",
+    "src_port": 2222,
+    "dest_address": "127.0.0.1",
+    "dest_user": "vagrant",
+    "dest_passw": "vagrant",
+    "dest_port": 2200,
+    "dest_wpath": "/var/www/app/"
+}
+```
+
+######Normal flow where destination user is root
+![Alt text](http://i.imgur.com/AjfHpej.png)
+```
+python3 main.py -j file.json
+```
+
+######Normal flow where destination user is not root, but has sudo access
+![Alt text](http://i.imgur.com/SRpNAUB.png)
+```
+python3 main.py -j file.json --dest-sudo
+```
+
+######Normal without posts
+![Alt text](http://i.imgur.com/gXMXpyv.png)
+```
+python3 main.py -j file.json --no-posts
+```
+
+######Normal without users
+![Alt text](http://i.imgur.com/MJTm1pi.png)
+```
+python3 main.py -j file.json --no-users
+```
+
+######Fast copy flow
+For the fast copy flow you need to add the following key in the json file (because the fast copy needs access without password):
+```
+"dest_filekey": "<path_of_your_vagrantfile>/.vagrant/machines/default/virtualbox/private_key"
+```
+
+![Alt text](http://i.imgur.com/0wOoB3U.png)
+```
+python3 main.py -j file.json --fast-copy
+```
+
+
+####Destination machine
+######Fix destination url
+The json file contains:
+```
+{
+    "dest_address": "192.168.123.91",
+    "dest_user": "vagrant",
+    "dest_passw": "vagrant",
+    "dest_wpath": "/var/www/app/"
+}
+```
+
+![Alt text](http://i.imgur.com/2BclvSJ.png)
+
+```
+# destination.local is the current url registered for wordpress (it is a link to 192.168.123.91 in my /etc/hosts)
+python3 main.py -j fix.json --fix-destination-hostname --current-site destination.local --new-site 192.168.123.91
+```
