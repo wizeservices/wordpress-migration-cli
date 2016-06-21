@@ -42,6 +42,10 @@ def handle_options():
                         help='The destination username is not root and needs '
                              'sudo')
 
+    parser.add_argument('--fast-copy', action='store_true',
+                        help='Transfer backup directly from source to '
+                             'destination')
+
     parser.add_argument('--fix-destination-hostname', action='store_true',
                         help='Change the hostname on wp_config and in the DB')
     parser.add_argument('--current-site', action='store', type=str,

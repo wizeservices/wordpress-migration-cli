@@ -34,7 +34,7 @@ class DestCopyWPBackupProcess(AbstractProcess):
     def execute(self, args, conf):
         ssh = AbstractProcess.CONS[self.target]
         sudo = 'sudo ' if args.dest_sudo else ''
-        cmd = '{}cp -r /tmp/{}/* {}/'.format(sudo,
+        cmd = '{}cp -r /tmp/{}/. {}/'.format(sudo,
                                              args.src_wpath,
                                              args.dest_wpath)
         lib.log.debug(cmd)
@@ -217,6 +217,33 @@ class DestUploadTarProcess(AbstractProcess):
         scp.put('wp.tar.gz', '/tmp/wp.src.tar.gz')
 
 
+class SrcCopyDestinationFileKeyProcess(AbstractProcess):
+    """Upload the destination file key to the source"""
+
+    def init(self):
+        self.target = AbstractProcess.SRC
+        self.name = 'Uploading destination file key to source'
+
+    def execute(self, args, conf):
+        ssh = AbstractProcess.CONS[self.target]
+        dest_filekey = '/tmp/tmp_key.pem'
+        _, stdout, stderr = ssh.exec_command('rm -f {}'.format(dest_filekey))
+        scp = SCPClient(ssh.get_transport(), socket_timeout=300.0)
+        scp.put(args.dest_filekey, dest_filekey)
+        if os.system('ssh-keygen -y -f {0} > {0}.pub'.format(args.dest_filekey)) != 0:
+            raise Exception('Unable to create the key')
+        ssh_dest = AbstractProcess.CONS[AbstractProcess.DEST]
+        scp = SCPClient(ssh_dest.get_transport(), socket_timeout=300.0)
+        pub_key = '/tmp/tmp_key.pub'
+        scp.put('{}.pub'.format(args.dest_filekey), pub_key)
+        key_path = '/{}/.ssh/authorized_keys' if args.dest_user == 'root' else '/home/{}/.ssh/authorized_keys'
+        key_path = key_path.format(args.dest_user)
+        _, stdout, stderr = ssh_dest.exec_command('grep -q "$(cat {})" {}'.format(pub_key, key_path))
+        if stdout.channel.recv_exit_status() != 0:
+            _, stdout, stderr = ssh_dest.exec_command('cat {} > {}'.format(pub_key, key_path))
+            if stdout.channel.recv_exit_status() != 0:
+                raise Exception(stderr.read())
+
 class SrcDoDBBackupProcess(AbstractProcess):
     """Creates the wp backup for the database"""
 
@@ -265,8 +292,24 @@ class SrcDownloadDBBackupProcess(AbstractProcess):
 
     def execute(self, args, conf):
         ssh = AbstractProcess.CONS[self.target]
-        scp = SCPClient(ssh.get_transport(), socket_timeout=300.0)
-        scp.get('/tmp/mysql.dump')
+        if args.fast_copy:
+            cmd = 'scp -oStrictHostKeyChecking=no -P {} '.format(args.dest_port)
+            dest_filekey = '/tmp/tmp_key.pem'
+            if args.dest_filekey:
+                cmd += '-i {} '.format(dest_filekey)
+
+            cmd += '/tmp/mysql.dump '
+            if args.dest_user:
+                cmd += '{}@'.format(args.dest_user)
+            cmd += '{}:/tmp/mysql.src.dump'.format(args.dest_address)
+            lib.log.debug(cmd)
+            _, stdout, stderr = ssh.exec_command(cmd)
+            status = stdout.channel.recv_exit_status()
+            if status != 0:
+                raise Exception(stderr.read().decode('utf-8'))
+        else:
+            scp = SCPClient(ssh.get_transport(), socket_timeout=300.0)
+            scp.get('/tmp/mysql.dump')
 
 
 class SrcDownloadTarProcess(AbstractProcess):
@@ -278,11 +321,27 @@ class SrcDownloadTarProcess(AbstractProcess):
 
     def execute(self, args, conf):
         ssh = AbstractProcess.CONS[self.target]
-        scp = SCPClient(ssh.get_transport(), socket_timeout=300.0)
-        scp.get('/tmp/wp.tar.gz')
-        # It checks if the file exists
-        if not os.path.exists('wp.tar.gz'):
-            raise Exception('Tar file does not exist')
+        if args.fast_copy:
+            cmd = 'scp -oStrictHostKeyChecking=no -P {} '.format(args.dest_port)
+            dest_filekey = '/tmp/tmp_key.pem'
+            if args.dest_filekey:
+                cmd += '-i {} '.format(dest_filekey)
+
+            cmd += '/tmp/wp.tar.gz '
+            if args.dest_user:
+                cmd += '{}@'.format(args.dest_user)
+            cmd += '{}:/tmp/wp.src.tar.gz'.format(args.dest_address)
+            lib.log.debug(cmd)
+            _, stdout, stderr = ssh.exec_command(cmd)
+            status = stdout.channel.recv_exit_status()
+            if status != 0:
+                raise Exception(stderr.read().decode('utf-8'))
+        else:
+            scp = SCPClient(ssh.get_transport(), socket_timeout=300.0)
+            scp.get('/tmp/wp.tar.gz')
+            # It checks if the file exists
+            if not os.path.exists('wp.tar.gz'):
+                raise Exception('Tar file does not exist')
 
 
 class SrcGetTableListProcess(AbstractProcess):

@@ -48,15 +48,15 @@ def _ssh_connect(args, direction):
         passw = args.__getattribute__(direction + '_passw')
         fkey = args.__getattribute__(direction + '_filekey')
         lib.log.info('Connecting to %s', address)
-        if fkey:
+        if passw:
+            ssh.connect(address, port=port, username=user, password=passw)
+        elif fkey:
             key = paramiko.RSAKey.from_private_key_file(fkey)
             # In case you need to set an user
             if user:
                 ssh.connect(address, port=port, username=user, pkey=key)
             else:
                 ssh.connect(address, port=port, pkey=key)
-        else:
-            ssh.connect(address, port=port, username=user, password=passw)
         lib.log.info('Connection successful')
         return ssh
     except Exception as exc:
