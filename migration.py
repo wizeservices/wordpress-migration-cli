@@ -52,9 +52,10 @@ class Migration(object):
             self.processes.append(process.all.DestUploadTarProcess())
         self.processes.append(process.all.DestCreateDBBackupProcess())
         self.processes.append(process.all.DestCreateWPBackupProcess())
-        self.processes.append(process.all.DestDecompressWordpressProcess())
         self.processes.append(process.all.DestErasePreviousWordpressProcess())
-        self.processes.append(process.all.DestCopyWPBackupProcess())
+        # self.processes.append(process.all.DestFixPermissionsProcess())
+        self.processes.append(process.all.DestDecompressWordpressProcess())
+        # self.processes.append(process.all.DestCopyWPBackupProcess())
         self.processes.append(process.common.DestReplaceConfProcess())
         self.processes.append(process.all.DestImportDBDumpProcess())
         if self.args.no_posts:
