@@ -4,8 +4,8 @@ import re
 
 from scp import SCPClient
 
-import lib
-from process.common import AbstractProcess
+from wordpress_migration_cli import lib
+from wordpress_migration_cli.process.common import AbstractProcess
 
 class DestCreateDBBackupProcess(AbstractProcess):
     """Creates wp database dump"""

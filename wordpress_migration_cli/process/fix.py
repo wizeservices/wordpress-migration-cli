@@ -1,6 +1,5 @@
-
-import lib
-from process.common import AbstractProcess
+from wordpress_migration_cli import lib
+from wordpress_migration_cli.process.common import AbstractProcess
 
 class DestDoDBBackupProcess(AbstractProcess):
     """Creates the wp backup for the database"""

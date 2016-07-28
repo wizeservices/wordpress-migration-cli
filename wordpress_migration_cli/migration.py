@@ -2,10 +2,10 @@ import json
 import os
 import os.path
 
-import process.common
-import process.all
-import process.fix
-import lib
+from wordpress_migration_cli.process import common
+from wordpress_migration_cli.process import all
+from wordpress_migration_cli.process import fix
+from wordpress_migration_cli import lib
 
 
 class Migration(object):
@@ -24,40 +24,40 @@ class Migration(object):
 
     def _init_processes_normal(self):
         self.info['type'] = 'all'
-        self.processes.append(process.common.SSHConnectSourceProcess())
+        self.processes.append(common.SSHConnectSourceProcess())
         # Force to always connect to the source
         self.processes[-1].required = True
-        self.processes.append(process.common.SSHConnectDestinationProcess())
+        self.processes.append(common.SSHConnectDestinationProcess())
         # Force to always connect to the destination
         self.processes[-1].required = True
-        self.processes.append(process.all.DestGetDBCredentialsProcess())
-        self.processes.append(process.all.DestGetSiteUrlProcess())
-        self.processes.append(process.all.SrcGetSiteUrlProcess())
-        self.processes.append(process.all.SrcGetTableListProcess())
-        self.processes.append(process.all.SrcDoDBBackupProcess())
-        self.processes.append(process.all.SrcDoTarProcess())
+        self.processes.append(all.DestGetDBCredentialsProcess())
+        self.processes.append(all.DestGetSiteUrlProcess())
+        self.processes.append(all.SrcGetSiteUrlProcess())
+        self.processes.append(all.SrcGetTableListProcess())
+        self.processes.append(all.SrcDoDBBackupProcess())
+        self.processes.append(all.SrcDoTarProcess())
         if self.args.fast_copy:
             if self.args.dest_filekey:
                 # It needs to upload only if the destination has a filekey
-                self.processes.append(process.all.SrcCopyDestinationFileKeyProcess())
-            self.processes.append(process.all.SrcDownloadDBBackupProcess())
-            self.processes.append(process.all.SrcDownloadTarProcess())
+                self.processes.append(all.SrcCopyDestinationFileKeyProcess())
+            self.processes.append(all.SrcDownloadDBBackupProcess())
+            self.processes.append(all.SrcDownloadTarProcess())
         else:
             # If the user selected fast copy, the tool won't need to upload
             # anything, because the backup is transferred directly from source
             # to destination
-            self.processes.append(process.all.SrcDownloadDBBackupProcess())
-            self.processes.append(process.all.SrcDownloadTarProcess())
-            self.processes.append(process.all.DestUploadDatabaseDumpProcess())
-            self.processes.append(process.all.DestUploadTarProcess())
-        self.processes.append(process.all.DestCreateDBBackupProcess())
-        self.processes.append(process.all.DestCreateWPBackupProcess())
-        self.processes.append(process.all.DestErasePreviousWordpressProcess())
-        self.processes.append(process.all.DestDecompressWordpressProcess())
-        self.processes.append(process.common.DestReplaceConfProcess())
-        self.processes.append(process.all.DestImportDBDumpProcess())
+            self.processes.append(all.SrcDownloadDBBackupProcess())
+            self.processes.append(all.SrcDownloadTarProcess())
+            self.processes.append(all.DestUploadDatabaseDumpProcess())
+            self.processes.append(all.DestUploadTarProcess())
+        self.processes.append(all.DestCreateDBBackupProcess())
+        self.processes.append(all.DestCreateWPBackupProcess())
+        self.processes.append(all.DestErasePreviousWordpressProcess())
+        self.processes.append(all.DestDecompressWordpressProcess())
+        self.processes.append(common.DestReplaceConfProcess())
+        self.processes.append(all.DestImportDBDumpProcess())
         if self.args.no_posts:
-            self.processes.append(process.all.DestTruncatePostsProcess())
+            self.processes.append(all.DestTruncatePostsProcess())
 
     def _init_processes_fix_destination(self):
         if self.args.current_site is None or self.args.current_site == '':
@@ -70,12 +70,12 @@ class Migration(object):
             {'DOMAIN_CURRENT_SITE': self.args.new_site,
              'SRC_DOMAIN_CURRENT_SITE': self.args.current_site}
         self.info['type'] = 'fix'
-        self.processes.append(process.common.SSHConnectDestinationProcess())
+        self.processes.append(common.SSHConnectDestinationProcess())
         # Force to always connect to the destination
         self.processes[-1].required = True
-        self.processes.append(process.fix.DestGetTableListProcess())
-        self.processes.append(process.fix.DestDoDBBackupProcess())
-        self.processes.append(process.common.DestReplaceConfProcess())
+        self.processes.append(fix.DestGetTableListProcess())
+        self.processes.append(fix.DestDoDBBackupProcess())
+        self.processes.append(common.DestReplaceConfProcess())
 
     def execute(self):
         """Will loop over the list of processes to execute each of them"""
@@ -117,4 +117,4 @@ class Migration(object):
         else:
             os.remove('.info.json')
             lib.log.info('Migration complete')
-        process.common.AbstractProcess.close_connections()
+        common.AbstractProcess.close_connections()
