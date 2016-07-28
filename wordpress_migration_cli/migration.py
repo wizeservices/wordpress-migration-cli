@@ -15,7 +15,7 @@ class Migration(object):
 
     def __init__(self, args):
         self.args = args
-        self.info = {'created': time.time(), 'step': 0, 'conf': dict()}
+        self.info = {}
         self.ssh_src = None
         self.ssh_dest = None
         self.processes = list()
@@ -23,7 +23,7 @@ class Migration(object):
             self._init_processes_fix_destination()
         else:
             self._init_processes_normal()
-        self.MAX_TIME = self.args.cache_expiration
+        self.max_time = self.args.cache_expiration
 
     def _init_processes_normal(self):
         self.info['type'] = 'all'
@@ -80,41 +80,57 @@ class Migration(object):
         self.processes.append(fix.DestDoDBBackupProcess())
         self.processes.append(common.DestReplaceConfProcess())
 
-    def execute(self):
-        """Will loop over the list of processes to execute each of them"""
+    def _fill_cache(self):
+        """Fills and Validates Cache file """
+        initial_info = {'created': time.time(), 'step': 0, 'conf': dict()}
         tmp_info = None
         if not self.args.no_cache and os.path.exists(self.CACHE_FILE):
             with open(self.CACHE_FILE) as file:
                 lib.log.debug('Loading json file')
                 tmp_info = json.loads(file.read())
+        else:
+            # Returns if cache is disabled or file does not exist
+            return initial_info
 
-        # tmp_info must exist to run the fix or full condition
-        # and no cache is not set
-        if tmp_info and not self.args.no_cache:
-            if time.time() - tmp_info['created'] > self.MAX_TIME:
-                lib.log.warning('Your cache is older than 2 hours')
-                cl_cache = input('Do you want to re-use the cache file {} (Y/n): '.
-                    format(self.CACHE_FILE)) or 'Y'
-                lib.log.debug('User selected: {}'.format(cl_cache))
-                if cl_cache.upper() == 'N':
-                    # Clears tmp_info and removes the cache file
-                    tmp_info = None
-                    os.remove(self.CACHE_FILE)
-                    lib.log.info('{} was removed'.format(self.CACHE_FILE))
+        # Check cache expiration time
+        if time.time() - tmp_info['created'] > self.max_time:
+            lib.log.warning('Your cache is older than 2 hours')
+            cl_cache = input('Do you want to re-use the cache file {} (Y/n): '.
+                format(self.CACHE_FILE)) or 'Y'
+            lib.log.debug('User selected: {}'.format(cl_cache))
+            if cl_cache.upper() == 'N':
+                # Clears tmp_info and removes the cache file the user selected
+                # not to use the cache
+                os.remove(self.CACHE_FILE)
+                lib.log.info('{} was removed'.format(self.CACHE_FILE))
+                return initial_info
+        if (tmp_info['src_address'] != self.args.src_address or
+            tmp_info['dest_address'] != self.args.dest_address):
+            # If source or destination doesn't match the cache file data
+            # Generate a new cache file and start over
+            lib.log.info('Cache file is invalid, starting over')
+            return initial_info
+        return tmp_info
+        
+    def _update_cache_file(self):
+        """Updates json file"""
+        with open(self.CACHE_FILE, 'w') as file:
+            file.write(json.dumps(self.info, indent=2, sort_keys=True))
+        lib.log.debug(self.info)
 
-        if tmp_info and not self.args.no_cache:
-            fix_condition = (self.args.fix_destination_hostname and
-                             tmp_info['type'] == 'fix')
-            full_condition = (not self.args.fix_destination_hostname and
-                              tmp_info['type'] == 'all')
-            if fix_condition or full_condition:
-                self.info = tmp_info
 
+    def execute(self):
+        """Will loop over the list of processes to execute each of them"""
+
+        self.info.update(self._fill_cache())
+        self.info['src_address'] = self.args.src_address
+        self.info['dest_address'] = self.args.dest_address
         tmp = [item for item in self.processes[:self.info['step']]
                if item.required]
         omit_count = len(tmp)
         tmp.extend(self.processes[self.info['step']:])
         self.info['process_list'] = {idx:str(item) for idx, item in enumerate(self.processes)}
+        self._update_cache_file()
         index = 0
         for proc in tmp:
             try:
@@ -127,9 +143,7 @@ class Migration(object):
                 if index >= omit_count:
                     self.info['step'] += 1
                 index += 1
-                with open(self.CACHE_FILE, 'w') as file:
-                    file.write(json.dumps(self.info, indent=2, sort_keys=True))
-                lib.log.debug(self.info)
+                self._update_cache_file()
             except Exception as exc:
                 lib.log.error(exc)
                 break

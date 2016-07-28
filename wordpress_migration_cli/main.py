@@ -40,7 +40,7 @@ def handle_options():
 
     parser.add_argument('--cache-expiration', action='store', type=int,
                         default=7200,
-                        help='Sets expiration time for the cache file, 2 hours')
+                        help='Expiration value for cache file, in seconds')
 
     parser.add_argument('--dest-sudo', action='store_true',
                         help='The destination username is not root and needs '
