@@ -16,7 +16,7 @@ class DestCreateDBBackupProcess(AbstractProcess):
 
     def execute(self, args, conf):
         ssh = AbstractProcess.CONS[self.target]
-        cmd = 'tar -cvf /tmp/wp.tar.gz {}'.format(args.dest_wpath)
+        cmd = 'tar -cf /tmp/wp.tar.gz {}'.format(args.dest_wpath)
         lib.log.debug(cmd)
         _, stdout, stderr = ssh.exec_command(cmd)
         status = stdout.channel.recv_exit_status()
@@ -103,9 +103,10 @@ class DestDecompressWordpressProcess(AbstractProcess):
 
     def execute(self, args, conf):
         ssh = AbstractProcess.CONS[self.target]
-        cmd = 'tar -xvf /tmp/wp.src.tar.gz -C /tmp'
+        sudo = 'sudo ' if args.dest_sudo else ''
+        cmd = '{0}mkdir -p {1}; {0}tar -xf /tmp/wp.src.tar.gz -C {1}'.format(sudo, args.dest_wpath)
         lib.log.debug(cmd)
-        _, stdout, stderr = ssh.exec_command(cmd)
+        _, stdout, stderr = ssh.exec_command(cmd, timeout=200)
         status = stdout.channel.recv_exit_status()
         if status != 0:
             raise Exception(stderr.read().decode('utf-8'))
@@ -121,7 +122,7 @@ class DestErasePreviousWordpressProcess(AbstractProcess):
     def execute(self, args, conf):
         ssh = AbstractProcess.CONS[self.target]
         sudo = 'sudo ' if args.dest_sudo else ''
-        cmd = '{}rm -rf {}/*'.format(sudo, args.dest_wpath)
+        cmd = '{}rm -rf {}'.format(sudo, args.dest_wpath)
         lib.log.debug(cmd)
         _, stdout, stderr = ssh.exec_command(cmd)
         status = stdout.channel.recv_exit_status()
@@ -275,7 +276,7 @@ class SrcDoTarProcess(AbstractProcess):
 
     def execute(self, args, conf):
         ssh = AbstractProcess.CONS[self.target]
-        cmd = 'tar -cvf /tmp/wp.tar.gz {}'.format(args.src_wpath)
+        cmd = 'cd {}; tar -cf /tmp/wp.tar.gz .'.format(args.src_wpath)
         lib.log.debug(cmd)
         _, stdout, stderr = ssh.exec_command(cmd)
         status = stdout.channel.recv_exit_status()
