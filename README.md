@@ -11,24 +11,20 @@ Wordpress migration client is a tool which makes easier to export a wordpress fr
 2. Machine in the middle (where the tool will run):
     1. Manual installation:
         1. Python 3.
-        ```
+          ```
         # Mac osx
         brew install python3
-        ```
+          ```
+
         2. Pip3.
-        ```
+          ```
         easy_install-3.5 pip
-        ```
-        3. Paramiko.
-        ```
-        pip3 install paramiko
-        ```
-        4. Scp.py.
-        ```
-        git clone https://github.com/jbardin/scp.py.git
-        cd scp.py/
-        python3 setup.py install
-        ```
+          ```
+
+        3. Python dependencies.
+          ```
+        pip3 install -r requirements.txt
+          ```
 
     2. Automatic installation (Mac OS X):
     ```
