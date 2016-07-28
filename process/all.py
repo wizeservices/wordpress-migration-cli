@@ -62,23 +62,6 @@ class DestCreateWPBackupProcess(AbstractProcess):
             raise Exception(stderr.read().decode('utf-8'))
 
 
-class DestFixPermissionsProcess(AbstractProcess):
-    """Fixes ownership permissions"""
-
-    def init(self):
-        self.target = AbstractProcess.DEST
-        self.name = 'Fixing ownership permissions'
-
-    def execute(self, args, conf):
-        ssh = AbstractProcess.CONS[self.target]
-        cmd = 'chown -R {} {}'.format(args.dest_user, args.dest_wpath)
-        lib.log.debug(cmd)
-        _, stdout, stderr = ssh.exec_command(cmd)
-        status = stdout.channel.recv_exit_status()
-        if status != 0:
-            raise Exception(stderr.read().decode('utf-8'))
-
-
 class DestGetDBCredentialsProcess(AbstractProcess):
     """Saves the dest wp-config.php configuration"""
 
