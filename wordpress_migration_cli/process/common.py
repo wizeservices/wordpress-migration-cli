@@ -3,7 +3,7 @@ from abc import ABCMeta, abstractmethod
 import paramiko
 from paramiko import SSHClient
 
-import lib
+from wordpress_migration_cli import lib
 
 
 class AbstractProcess(object):

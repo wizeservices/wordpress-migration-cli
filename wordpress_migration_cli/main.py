@@ -4,8 +4,8 @@ import argparse
 import json
 import logging
 
-from migration import Migration
-import lib
+from wordpress_migration_cli.migration import Migration
+from wordpress_migration_cli import lib
 
 
 def load_from_json(args, defaults):

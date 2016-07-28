@@ -1,5 +1,8 @@
 *.json
 *.dump
 *.tar.gz
-__pycache__/*
-process/__pycache__/*
+wordpress_migration_cli/__pycache__/*
+wordpress_migration_cli/process/__pycache__/*
+build/
+dist/
+wordpress_migration_cli.egg-info/
